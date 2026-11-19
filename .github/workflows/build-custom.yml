@@ -1,0 +1,14 @@
+name: Build custom RustDesk (Windows x64)
+
+# flutter-build.yml only exposes workflow_call, so it cannot be started by hand.
+# This wrapper gives us the manual trigger and forwards to it.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/flutter-build.yml
+    with:
+      upload-artifact: true
+      upload-tag: "custom-153"
+      publish-update-metadata: false
