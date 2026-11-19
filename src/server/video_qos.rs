@@ -51,7 +51,7 @@ delay:
 pub const FPS: u32 = 30;
 pub const MIN_FPS: u32 = 1;
 pub const MAX_FPS: u32 = 120;
-pub const INIT_FPS: u32 = 15;
+pub const INIT_FPS: u32 = 30;
 const MIN_AUTO_FPS: u32 = 5;
 
 // Bitrate ratio constants for different quality levels
@@ -528,7 +528,7 @@ impl VideoQoS {
                 if avg_delay < 200 {
                     fps = min_fps.max(devide_fps);
                 } else if avg_delay < 300 {
-                    fps = min_fps.min(devide_fps);
+                    fps = min_fps.max(devide_fps);
                 } else if avg_delay < 600 {
                     fps = dividend_ms / avg_delay;
                 } else {
@@ -555,6 +555,10 @@ impl VideoQoS {
             if bitrate_first {
                 // While the bitrate can still come down, the frame rate keeps its floor.
                 fps = fps.max(min_fps);
+            } else {
+                // Even when the bitrate cannot be reduced, keep a floor: a single-digit
+                // frame rate only enlarges the next keyframe and lengthens the stall.
+                fps = fps.max((min_fps / 2).max(MIN_AUTO_FPS));
             }
             fps = fps.max(MIN_AUTO_FPS.min(user_cap));
             fps = user
@@ -617,7 +621,7 @@ impl VideoQoS {
                 reference
             }
         };
-        let divisor = 1u32 << ((elapsed / 1000) as u32).saturating_sub(1).min(5);
+        let divisor = 1u32 << ((elapsed / 1500) as u32).saturating_sub(1).min(3);
         let user_cap = user.fps_cap();
         // The floor is a floor, not a lift: a target already below it stays.
         let current = user.delay.fps.unwrap_or(reference);
