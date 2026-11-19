@@ -966,7 +966,13 @@ pub fn base_bitrate(width: u32, height: u32) -> u32 {
     }
     #[cfg(not(target_os = "android"))]
     {
-        bitrate
+        // Stock table gives 2560x1440 only 3000 kbps and 1080p 2073 kbps. A 60 fps 2K
+        // stream needs roughly 20-30 Mbps to look clean, so an encoder pinned to that
+        // budget spends the rest on dropped detail (blur) and heavier prediction
+        // buffering (a jittery pipeline that the shared audio/video stream turns into a
+        // whole-session freeze). Scale the preset 4x: 2K lands near 12.5 Mbps at 100%
+        // and 24.5 Mbps at 200%, both inside a 32 Mbps uplink.
+        bitrate * 4
     }
 }
 
